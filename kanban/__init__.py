@@ -9,6 +9,7 @@ from .engine import KanbanEngine
 from .analytics import MetricsEngine
 from .visualizer import BoardVisualizer
 from .reports import ReportGenerator
+from .ml import LinearRegressionModel, LogisticRegressionModel, KanbanMLAssistant
 
 __all__ = [
     "Task",
@@ -20,4 +21,8 @@ __all__ = [
     "MetricsEngine",
     "BoardVisualizer",
     "ReportGenerator",
+    "LinearRegressionModel",
+    "LogisticRegressionModel",
+    "KanbanMLAssistant",
 ]
+

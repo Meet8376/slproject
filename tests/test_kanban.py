@@ -135,7 +135,72 @@ class TestKanbanEngine(unittest.TestCase):
             content = f.read()
         self.assertIn("Test Project", content)
         self.assertIn("TASK-1", content)
+        self.assertIn("Machine Learning Predictive Insights", content)
+
+    def test_ml_linear_regression(self):
+        """Verify NumPy multiple linear regression model training and convergence."""
+        from kanban.ml import LinearRegressionModel
+        # Generate synthetic linear data: y = 2*x1 + 3*x2 + 1.0 + noise
+        rng = np.random.default_rng(42)
+        X = rng.uniform(1.0, 10.0, size=(100, 2))
+        y = 2.0 * X[:, 0] + 3.0 * X[:, 1] + 1.0 + rng.normal(0, 0.2, size=100)
+
+        model = LinearRegressionModel(learning_rate=0.05, epochs=1500)
+        model.fit(X, y)
+        metrics = model.evaluate(X, y)
+
+        self.assertGreater(metrics["r2_score"], 0.90)
+        self.assertLess(metrics["mae"], 1.0)
+
+        # Single prediction test
+        pred = model.predict(np.array([[5.0, 5.0]]))
+        expected = 2.0 * 5.0 + 3.0 * 5.0 + 1.0  # 26.0
+        self.assertAlmostEqual(pred[0], expected, delta=1.5)
+
+    def test_ml_logistic_regression(self):
+        """Verify NumPy logistic regression binary classification."""
+        from kanban.ml import LogisticRegressionModel
+        rng = np.random.default_rng(42)
+        X = rng.normal(0, 1, size=(100, 2))
+        # Linearly separable with sigmoid boundary
+        y = (X[:, 0] + X[:, 1] > 0).astype(int)
+
+        model = LogisticRegressionModel(learning_rate=0.05, epochs=1500)
+        model.fit(X, y)
+        metrics = model.evaluate(X, y)
+
+        self.assertGreaterEqual(metrics["accuracy"], 80.0)
+
+    def test_kanban_ml_assistant(self):
+        """Verify end-to-end Kanban ML Assistant feature extraction and prediction."""
+        from kanban.ml import KanbanMLAssistant
+        assistant = KanbanMLAssistant()
+        assistant.train(self.engine.df)
+
+        self.assertTrue(assistant.is_trained)
+        self.assertGreater(assistant.training_sample_count, 0)
+
+        pred_effort = assistant.predict_task_effort(
+            estimated_hours=4.0,
+            priority=Priority.HIGH,
+            category="Backend",
+            assignee="Meet",
+            tags="database, sql",
+            title="Setup database replica",
+        )
+        self.assertIn("predicted_actual_hours", pred_effort)
+        self.assertGreater(pred_effort["predicted_actual_hours"], 0.0)
+
+        pred_risk = assistant.predict_overrun_risk(
+            estimated_hours=4.0,
+            priority=Priority.HIGH,
+            category="Backend",
+            assignee="Meet",
+        )
+        self.assertIn("risk_level", pred_risk)
+        self.assertIn(pred_risk["risk_level"], ["LOW", "MEDIUM", "HIGH"])
 
 
 if __name__ == "__main__":
     unittest.main()
+

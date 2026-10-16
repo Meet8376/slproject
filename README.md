@@ -17,7 +17,8 @@ We built a lightweight, fast, terminal-based Kanban engine in Python using **Pan
 3. **State-Transition Validation:** Strict finite-state transition constraints (e.g., preventing jumping directly from `TODO` to `DONE`).
 4. **Vectorized Bulk Filtering:** Filtering across multiple dimensions (assignee, status, priority, category, tags, effort ranges) via Pandas boolean indexing.
 5. **NumPy Statistical Engine:** Automated estimation variance, cycle times, effort percentiles (50th, 75th, 90th), and effort outlier detection.
-6. **Automated Reporting:** Executive Markdown reports and terminal dashboards generated on demand.
+6. **NumPy Machine Learning Engine:** Multiple Linear Regression with Gradient Descent for task effort prediction, and Logistic Regression with Sigmoid activation for overrun & delay risk detection.
+7. **Automated Reporting:** Executive Markdown reports and terminal dashboards generated on demand with ML predictive audits.
 
 ---
 
@@ -27,7 +28,7 @@ We built a lightweight, fast, terminal-based Kanban engine in Python using **Pan
 | :--- | :--- | :--- |
 | **Meet Agrawal**<br>*(Roll No: 13, Class: A8)* | **Core Data Model & Persistence Layer** | • Designed `Task` class (OOP - Practical 4)<br>• Finite state-transition validation rules & sets (Practicals 2 & 3)<br>• `StorageEngine` for persistent CSV and Excel I/O via Pandas |
 | **Sujal Nandanwar**<br>*(Roll No: 40, Class: A8)* | **Data Processing & Statistical Analytics** | • Pandas DataFrame indexing and vectorized boolean filtering (`filter_tasks`)<br>• NumPy analytics engine (`MetricsEngine` - Practical 5): mean, median, standard deviation, 90th percentile, estimation variance |
-| **Team Member 3** | **Visualizer, CLI & Automated Reporting** | • Multi-column ASCII terminal Kanban board (`BoardVisualizer`)<br>• `ReportGenerator` for automated Markdown reports & terminal summaries<br>• Interactive menu loop and CLI argument parser (`kanban_cli.py`) |
+| **Team Member 3** | **Visualizer, CLI & Machine Learning** | • Multi-column ASCII terminal Kanban board (`BoardVisualizer`)<br>• Pure NumPy learning algorithms (`LinearRegressionModel`, `LogisticRegressionModel`, `KanbanMLAssistant`)<br>• `ReportGenerator` for automated Markdown reports & terminal summaries<br>• Interactive menu loop and CLI argument parser (`kanban_cli.py`) |
 
 ---
 
@@ -40,6 +41,7 @@ We built a lightweight, fast, terminal-based Kanban engine in Python using **Pan
 | **OOP & File I/O** | **Practical 4** | `Task`, `StorageEngine`, `KanbanEngine` classes; file persistence with safe schema verification and delimiter handling. |
 | **NumPy Array Computations** | **Practical 5** | Effort analysis via `np.mean()`, `np.median()`, `np.std()`, `np.var()`, `np.percentile()`, boolean indexing for outlier detection (`actual_hours >= threshold`), and estimation error vectors. |
 | **Pandas DataFrames** | **Advanced SL** | `pd.read_csv`, `to_csv`, `pd.read_excel`, fast `.loc[task_id]` indexing, multi-column `.groupby()`, and crosstabs. |
+| **Machine Learning / Statistical Learning** | **SL Advanced Project** | Vectorized matrix math ($X \mathbf{w} + b$), Z-score standardization, Batch Gradient Descent, MSE & Cross-Entropy loss functions, $R^2$ evaluation, and Sigmoid probability classification built purely from scratch using NumPy. |
 
 ---
 
@@ -55,13 +57,14 @@ slproject/
 ├── demo.py                  # Step-by-step automated demo for lab viva
 ├── kanban_cli.py            # Main application (Interactive Menu + CLI commands)
 ├── tests/
-│   └── test_kanban.py       # Unit tests covering state machine, filtering, and stats
+│   └── test_kanban.py       # Unit tests covering state machine, filtering, stats & ML
 └── kanban/
     ├── __init__.py          # Package exports
     ├── models.py            # Task model, Status, Priority, State-transition rules
     ├── storage.py           # CSV and Excel persistence engine using Pandas
     ├── engine.py            # DataFrame indexing, CRUD operations, bulk filtering
     ├── analytics.py         # NumPy statistical engine & Pandas aggregations
+    ├── ml.py                # Pure NumPy Linear & Logistic Regression learning engine
     ├── visualizer.py        # ASCII multi-column terminal board and tables
     └── reports.py           # Markdown report and terminal dashboard generator
 ```

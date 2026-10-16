@@ -1,6 +1,6 @@
 # 📋 Software Lab Kanban System - Project Report
 
-**Date of Report:** October 14, 2026 - 15:57  
+**Date of Report:** October 16, 2026 - 08:28  
 **Core Technologies:** Python 3, Pandas (DataFrames & Vectorization), NumPy (Statistical Computations)  
 **Academic Course:** Software Lab I (SL)
 
@@ -64,6 +64,28 @@ This section leverages **NumPy vectorization and statistical distributions** (as
 ### 🚨 Critical Priority Tasks
 - **[TASK-104] Add state transition validation & constraint rules** - Status: `REVIEW` (Assignee: @Meet)
 - **[TASK-110] Resolve third-party library dependency conflict** - Status: `BLOCKED` (Assignee: @Meet)
+
+## 6. 🤖 Machine Learning Predictive Insights (NumPy Engine)
+
+Trained on historical task outcomes via **Multiple Linear Regression** and **Logistic Regression** (Gradient Descent):
+
+* **Effort Predictor R² Score:** `0.923` (Mean Absolute Error: `0.33` hrs)
+* **Risk Classifier Accuracy:** `89.7%` (Precision: `85.7%`)
+
+### Key Influencing Features (Learned Weights):
+- **`estimated_hours`**: Weight `+1.157` (increases effort)
+- **`assignee_historical_bias`**: Weight `+0.493` (increases effort)
+- **`category_id`**: Weight `+0.302` (increases effort)
+- **`priority_level`**: Weight `+0.250` (increases effort)
+
+### Active Task Predictive Audit:
+| task_id   | title                           | assignee   | status      |   estimated_hrs |   predicted_hrs | variance   | overrun_risk     |
+|:----------|:--------------------------------|:-----------|:------------|----------------:|----------------:|:-----------|:-----------------|
+| TASK-104  | Add state transition validat... | Meet       | REVIEW      |             4.5 |            4.58 | +0.1h      | 🟡 MEDIUM (35.9%) |
+| TASK-105  | Implement bulk DataFrame boo... | Sujal      | IN_PROGRESS |             5   |            5.04 | +0.0h      | 🟢 LOW (13.7%)    |
+| TASK-106  | Build automated Markdown & C... | Member3    | IN_PROGRESS |             3.5 |            2.63 | -0.9h      | 🟢 LOW (0.1%)     |
+| TASK-108  | Add outlier detection using ... | Sujal      | TODO        |             2.5 |            1.88 | -0.6h      | 🟢 LOW (0.1%)     |
+| TASK-109  | Write comprehensive unit tes... | Member3    | TODO        |             4   |            3.54 | -0.5h      | 🟢 LOW (1.6%)     |
 
 ---
 *Generated automatically by Python Terminal Kanban Engine.*

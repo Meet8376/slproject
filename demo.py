@@ -89,14 +89,32 @@ def run_demo():
     reporter = ReportGenerator(engine.df, project_name="Software Lab Kanban System")
     print(reporter.generate_terminal_summary())
 
-    # STEP 7: Automated Report Generation
-    print_step("STEP 7: Automated Markdown Report Generation")
+    # STEP 7: Machine Learning Predictive Engine
+    print_step("STEP 7: Machine Learning Predictive Engine (Multiple Linear & Logistic Regression)")
+    from kanban.ml import KanbanMLAssistant
+    ml = KanbanMLAssistant()
+    ml.train(engine.df)
+    print("🤖 Model Training Results:")
+    print(f"  • Effort Regression R² Score : {ml.regression_metrics.get('r2_score')} (MAE: {ml.regression_metrics.get('mae')} hrs)")
+    print(f"  • Overrun Risk Accuracy      : {ml.risk_metrics.get('accuracy')}%")
+    print("\nLearned Weights (Key Drivers):")
+    for feat, w in ml.get_feature_importances()[:4]:
+        print(f"  • {feat:<25}: {w:+.3f}")
+
+    sample_pred = ml.predict_task_effort(estimated_hours=4.5, priority=Priority.HIGH, category="Backend", assignee="Meet")
+    sample_risk = ml.predict_overrun_risk(estimated_hours=4.5, priority=Priority.HIGH, category="Backend", assignee="Meet")
+    print(f"\nLive Inference for Proposed Task ('Backend' by @Meet, Est: 4.5h):")
+    print(f"  -> Predicted Actual Effort : {sample_pred['predicted_actual_hours']} hrs ({sample_pred['predicted_variance']:+0.1f}h)")
+    print(f"  -> Overrun Risk Level      : {sample_risk['risk_symbol']} {sample_risk['risk_level']} ({sample_risk['risk_probability_pct']}%)")
+
+    # STEP 8: Automated Report Generation
+    print_step("STEP 8: Automated Markdown Report Generation (with ML Predictive Insights)")
     report_file = "kanban_project_report.md"
     saved = reporter.generate_markdown_report(report_file)
     print(f"✅ Generated executive project report: {saved}")
 
-    # STEP 8: Excel Storage Conversion
-    print_step("STEP 8: Dynamic Excel (.xlsx) Storage Conversion via OpenpyXL")
+    # STEP 9: Excel Storage Conversion
+    print_step("STEP 9: Dynamic Excel (.xlsx) Storage Conversion via OpenpyXL")
     excel_file = "demo_tasks.xlsx"
     engine.storage.switch_format(excel_file)
     print(f"✅ State successfully persisted to Excel: {excel_file}")
@@ -109,7 +127,7 @@ def run_demo():
         os.remove(excel_file)
 
     print("\n" + "=" * 70)
-    print("  🎉 DEMO COMPLETE: All software lab requirements verified!")
+    print("  🎉 DEMO COMPLETE: All software lab & ML requirements verified!")
     print("=" * 70 + "\n")
 
 

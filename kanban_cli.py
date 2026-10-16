@@ -14,6 +14,7 @@ from kanban.models import Task, TaskStatus, Priority
 from kanban.visualizer import BoardVisualizer
 from kanban.analytics import MetricsEngine
 from kanban.reports import ReportGenerator
+from kanban.ml import KanbanMLAssistant
 from sample_data import populate_sample_data
 
 
@@ -38,10 +39,11 @@ def show_interactive_menu(engine: KanbanEngine) -> None:
         print(" [9] 📄 Generate Automated Project Report (Markdown)")
         print(" [10] 💾 Storage Management (Switch CSV / Excel / Backup)")
         print(" [11] ⚡ Seed Sample Demonstration Data")
+        print(" [12] 🤖 Machine Learning Predictive Engine (Effort & Overrun Risk)")
         print(" [0] 🚪 Exit")
         print("─" * 60)
 
-        choice = input("Enter option (0-11): ").strip()
+        choice = input("Enter option (0-12): ").strip()
 
         if choice == "0":
             print("\nExiting Kanban Engine. Board state saved.")
@@ -72,6 +74,39 @@ def show_interactive_menu(engine: KanbanEngine) -> None:
                 est_hours = 2.0
 
             tags = input("Tags (comma-separated, e.g., 'ui, bug'): ").strip()
+
+            # Machine Learning Inference on proposed task
+            try:
+                ml = KanbanMLAssistant()
+                ml.train(engine.df)
+                pred = ml.predict_task_effort(
+                    estimated_hours=est_hours,
+                    priority=priority,
+                    category=category,
+                    assignee=assignee,
+                    tags=tags,
+                    title=title,
+                )
+                risk = ml.predict_overrun_risk(
+                    estimated_hours=est_hours,
+                    priority=priority,
+                    category=category,
+                    assignee=assignee,
+                    tags=tags,
+                    title=title,
+                )
+                print("\n" + "─" * 45)
+                print("  🤖 ML PREDICTION ASSISTANT (NumPy Models)")
+                print("─" * 45)
+                print(f"  • Predicted Actual Effort : {pred['predicted_actual_hours']} hrs ({pred['predicted_variance']:+0.1f}h from estimate)")
+                print(f"  • Overrun Risk Level      : {risk['risk_symbol']} {risk['risk_level']} ({risk['risk_probability_pct']}% chance)")
+                print(f"  • Velocity Factor         : {assignee} is {pred['assignee_pace_note']} ({pred['assignee_velocity_factor']}x)")
+                print("─" * 45)
+                adopt = input(f"Adopt ML-recommended effort ({pred['predicted_actual_hours']}h) instead of {est_hours}h? (y/N): ").strip().lower()
+                if adopt == "y":
+                    est_hours = pred["predicted_actual_hours"]
+            except Exception as e:
+                pass
 
             new_task = Task(
                 task_id=engine.generate_next_task_id(),
@@ -247,6 +282,55 @@ def show_interactive_menu(engine: KanbanEngine) -> None:
                 engine.refresh()
             input("\nPress Enter to continue...")
 
+        elif choice == "12":
+            print("\n--- 🤖 Machine Learning Predictive Engine (NumPy Implementation) ---")
+            ml = KanbanMLAssistant()
+            ml.train(engine.df)
+
+            reg_m = ml.regression_metrics
+            risk_m = ml.risk_metrics
+            weights = ml.get_feature_importances()
+
+            print("\n📊 Model Performance Summary:")
+            print(f"  • Multiple Linear Regression (Effort Predictor):")
+            print(f"    - R² Score : {reg_m.get('r2_score', 0.0)} (Variance explained)")
+            print(f"    - MAE      : {reg_m.get('mae', 0.0)} hours (Mean Absolute Error)")
+            print(f"    - RMSE     : {reg_m.get('rmse', 0.0)} hours")
+            print(f"  • Logistic Regression (Overrun Risk Classifier):")
+            print(f"    - Accuracy : {risk_m.get('accuracy', 0.0)}%")
+            print(f"    - Precision: {risk_m.get('precision', 0.0)}%")
+            print(f"    - Recall   : {risk_m.get('recall', 0.0)}%")
+
+            print("\n🧠 Learned Feature Weights (Key Drivers):")
+            for feat_name, w in weights:
+                direction = "increases effort" if w > 0 else "decreases effort"
+                print(f"  • {feat_name:<26}: {w:+.3f} ({direction})")
+
+            print("\n--- Interactive Task Simulator ---")
+            sim = input("Simulate prediction for a proposed task? (y/n): ").strip().lower()
+            if sim == "y":
+                sim_title = input("Task Title: ").strip() or "Sample feature"
+                sim_cat = input("Category (Backend/Analytics/Core/DevOps/CLI/Testing): ").strip() or "Backend"
+                sim_prio = input("Priority (LOW/MEDIUM/HIGH/CRITICAL): ").strip().upper() or "MEDIUM"
+                sim_ass = input("Assignee (Meet/Sujal/Member3/etc.): ").strip() or "Meet"
+                try:
+                    sim_est = float(input("Estimated Hours: ").strip() or "4.0")
+                except ValueError:
+                    sim_est = 4.0
+                sim_tags = input("Tags (comma separated): ").strip()
+
+                p_res = ml.predict_task_effort(sim_est, sim_prio, sim_cat, sim_ass, sim_tags, sim_title)
+                r_res = ml.predict_overrun_risk(sim_est, sim_prio, sim_cat, sim_ass, sim_tags, sim_title)
+
+                print("\n🎯 ML Inference Results:")
+                print(f"  • Input Estimate           : {sim_est:.1f} hrs")
+                print(f"  • Predicted Actual Effort  : {p_res['predicted_actual_hours']} hrs")
+                print(f"  • Predicted Variance       : {p_res['predicted_variance']:+0.1f} hrs ({p_res['variance_percent']:+0.1f}%)")
+                print(f"  • Overrun Risk Probability : {r_res['risk_symbol']} {r_res['risk_level']} ({r_res['risk_probability_pct']}%)")
+                print(f"  • Assignee Pace Insight    : {sim_ass} is {p_res['assignee_pace_note']} ({p_res['assignee_velocity_factor']}x)")
+
+            input("\nPress Enter to continue...")
+
         else:
             print("Invalid selection. Please choose a valid number.")
             input("\nPress Enter to continue...")
@@ -303,6 +387,42 @@ def run_cli_command(engine: KanbanEngine, args: argparse.Namespace) -> None:
         populate_sample_data(engine)
         print("Sample data populated.")
 
+    elif cmd == "ml-eval":
+        ml = KanbanMLAssistant()
+        ml.train(engine.df)
+        print("\n=== 🤖 MACHINE LEARNING MODEL EVALUATION (NumPy) ===")
+        print(f"Training Samples: {ml.training_sample_count}")
+        print(f"Linear Regression R² Score : {ml.regression_metrics.get('r2_score')}")
+        print(f"Mean Absolute Error (MAE)  : {ml.regression_metrics.get('mae')} hrs")
+        print(f"Root Mean Squared Error    : {ml.regression_metrics.get('rmse')} hrs")
+        print(f"Risk Classifier Accuracy   : {ml.risk_metrics.get('accuracy')}%")
+        print("\nFeature Weights:")
+        for name, w in ml.get_feature_importances():
+            print(f"  {name:<25}: {w:+.3f}")
+
+    elif cmd == "ml-predict":
+        ml = KanbanMLAssistant()
+        ml.train(engine.df)
+        p_res = ml.predict_task_effort(
+            estimated_hours=args.estimated,
+            priority=args.priority,
+            category=args.category,
+            assignee=args.assignee,
+            tags=args.tags,
+            title=args.title or "Proposed Task",
+        )
+        r_res = ml.predict_overrun_risk(
+            estimated_hours=args.estimated,
+            priority=args.priority,
+            category=args.category,
+            assignee=args.assignee,
+            tags=args.tags,
+            title=args.title or "Proposed Task",
+        )
+        print(f"\n🎯 Prediction for [{args.category}] task by @{args.assignee} (Estimate: {args.estimated}h):")
+        print(f"  Predicted Actual Hours : {p_res['predicted_actual_hours']} hrs ({p_res['predicted_variance']:+0.1f}h)")
+        print(f"  Overrun Risk Level     : {r_res['risk_symbol']} {r_res['risk_level']} ({r_res['risk_probability_pct']}%)")
+
 
 def build_arg_parser() -> argparse.ArgumentParser:
     """Construct argument parser for command line execution."""
@@ -350,6 +470,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
     # seed
     subparsers.add_parser("seed", help="Seed sample dataset")
+
+    # ml-eval
+    subparsers.add_parser("ml-eval", help="Evaluate NumPy ML predictive models")
+
+    # ml-predict
+    pred_parser = subparsers.add_parser("ml-predict", help="Predict task duration and overrun risk")
+    pred_parser.add_argument("--estimated", type=float, required=True, help="Estimated hours")
+    pred_parser.add_argument("--priority", default=Priority.MEDIUM, help="Task priority")
+    pred_parser.add_argument("--category", default="Backend", help="Task category")
+    pred_parser.add_argument("--assignee", default="Meet", help="Assignee name")
+    pred_parser.add_argument("--title", default="", help="Task title")
+    pred_parser.add_argument("--tags", default="", help="Tags")
 
     return parser
 
