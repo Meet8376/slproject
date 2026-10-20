@@ -9,3 +9,4 @@ TASK-107,Support Excel (.xlsx) storage format via openpyxl,Meet,IN_PROGRESS,MEDI
 TASK-108,Add outlier detection using 90th percentile threshold,Sujal,TODO,LOW,Analytics,2.5,0.0,"math, numpy, outliers",2026-10-14 09:00,
 TASK-109,Write comprehensive unit tests for state machine,Member3,TODO,HIGH,Testing,4.0,0.0,"pytest, quality, testing",2026-10-14 10:00,
 TASK-110,Resolve third-party library dependency conflict,Meet,BLOCKED,CRITICAL,DevOps,2.0,3.0,"blocking, bug, devops",2026-10-14 10:30,
+TASK-111,make a document,Madhura,IN_PROGRESS,CRITICAL,Frontend,4.0,0.0,"'script, ai'",2026-10-20 17:38,

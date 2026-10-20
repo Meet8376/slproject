@@ -5,16 +5,24 @@ Supports both an Interactive Menu Mode and a direct Command-Line Mode (CLI).
 Developed for Software Lab Project using Python, Pandas, and NumPy.
 """
 
+import io
 import sys
 import argparse
 from typing import Optional
+
+# Force UTF-8 output so emoji render correctly on Windows cp1252 terminals
+if hasattr(sys.stdout, 'buffer'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'buffer'):
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 from kanban.engine import KanbanEngine
 from kanban.models import Task, TaskStatus, Priority
 from kanban.visualizer import BoardVisualizer
 from kanban.analytics import MetricsEngine
 from kanban.reports import ReportGenerator
-from sample_data import populate_sample_data
+from sample_data import populate_sample_data, generate_synthetic_tasks
+from kanban.ml import MLEngine, MIN_TRAINING_SAMPLES
 
 
 def show_interactive_menu(engine: KanbanEngine) -> None:
@@ -38,6 +46,7 @@ def show_interactive_menu(engine: KanbanEngine) -> None:
         print(" [9] 📄 Generate Automated Project Report (Markdown)")
         print(" [10] 💾 Storage Management (Switch CSV / Excel / Backup)")
         print(" [11] ⚡ Seed Sample Demonstration Data")
+        print(" [12] 🤖 ML Prediction (Predict Actual Hours)")
         print(" [0] 🚪 Exit")
         print("─" * 60)
 
@@ -247,9 +256,92 @@ def show_interactive_menu(engine: KanbanEngine) -> None:
                 engine.refresh()
             input("\nPress Enter to continue...")
 
+        elif choice == "12":
+            _run_ml_menu(engine)
+
         else:
             print("Invalid selection. Please choose a valid number.")
             input("\nPress Enter to continue...")
+
+
+
+def _run_ml_menu(engine: KanbanEngine) -> None:
+    """Interactive sub-menu for the ML Prediction engine."""
+    import pandas as pd
+
+    print("\n" + "=" * 55)
+    print("   🤖 ML PREDICTION ENGINE  (kanban/ml.py)")
+    print("=" * 55)
+
+    # ── Build training DataFrame ─────────────────────────────
+    # Use the live board data; if fewer than MIN_TRAINING_SAMPLES
+    # completed rows exist, top-up with synthetic tasks so the
+    # model always has enough signal to train.
+    live_df = engine.df.copy()
+    completed = live_df[live_df["actual_hours"].fillna(0.0) > 0.0]
+    shortfall = max(0, MIN_TRAINING_SAMPLES - len(completed))
+
+    if shortfall > 0:
+        print(f"\n  Board has {len(completed)} completed task(s) — adding {300} synthetic")
+        print("  training samples to reach minimum threshold...")
+        syn_tasks = list(generate_synthetic_tasks(n=300, seed=7))
+        syn_df = pd.DataFrame([t.to_dict() for t in syn_tasks])
+        train_df = pd.concat([live_df, syn_df], ignore_index=True)
+    else:
+        print(f"\n  Using {len(completed)} completed board tasks as training data.")
+        train_df = live_df
+
+    # ── Train ────────────────────────────────────────────────
+    print("  Training RandomForestRegressor (200 trees)...")
+    try:
+        ml = MLEngine(train_df, model_dir="models")
+        metrics = ml.train()
+    except ValueError as exc:
+        print(f"  ❌ Training failed: {exc}")
+        input("\nPress Enter to continue...")
+        return
+
+    print("\n  --- Model Evaluation ---")
+    print(f"  Train samples : {metrics['n_train']}   Test samples : {metrics['n_test']}")
+    print(f"  MAE  (test)   : {metrics['mae_test']} hrs  |  R2 (test) : {metrics['r2_test']}")
+
+    print("\n  --- Feature Importances ---")
+    for feat, score in metrics["feature_importances"].items():
+        bar = "#" * int(score * 30)
+        print(f"  {feat:<18} {score:.3f}  {bar}")
+
+    # ── Save model ───────────────────────────────────────────
+    saved_path = ml.save_model()
+    print(f"\n  Model saved -> {saved_path}")
+
+    # ── Interactive prediction loop ──────────────────────────
+    print("\n" + "-" * 55)
+    print("  PREDICT actual hours for a new task")
+    print("-" * 55)
+
+    while True:
+        print(f"\n  Priorities : {', '.join(Priority.ALL_PRIORITIES)}")
+        priority = input("  Enter Priority (or 'done' to exit): ").strip().upper()
+        if priority in ("DONE", "EXIT", "Q", ""):
+            break
+        if priority not in Priority.ALL_PRIORITIES:
+            print(f"  Invalid priority. Choose from {Priority.ALL_PRIORITIES}")
+            continue
+
+        category = input("  Enter Category (e.g. Backend, Core, Testing): ").strip() or "General"
+        assignee = input("  Enter Assignee name: ").strip() or "Unassigned"
+        try:
+            est = float(input("  Enter Estimated Hours: ").strip() or "4.0")
+        except ValueError:
+            est = 4.0
+
+        predicted = ml.predict_single(priority, category, assignee, est)
+        overrun = predicted - est
+        sign = "+" if overrun >= 0 else ""
+        print(f"\n  ✅ Predicted actual hours : {predicted:.2f} h"
+              f"  ({sign}{overrun:.2f} h vs estimate)")
+
+    input("\nPress Enter to continue...")
 
 
 def run_cli_command(engine: KanbanEngine, args: argparse.Namespace) -> None:
@@ -292,6 +384,28 @@ def run_cli_command(engine: KanbanEngine, args: argparse.Namespace) -> None:
     elif cmd == "stats":
         reporter = ReportGenerator(engine.df)
         print(reporter.generate_terminal_summary())
+
+    elif cmd == "predict":
+        import pandas as pd
+        live_df = engine.df.copy()
+        completed = live_df[live_df["actual_hours"].fillna(0.0) > 0.0]
+        if len(completed) < MIN_TRAINING_SAMPLES:
+            syn_tasks = list(generate_synthetic_tasks(n=300, seed=7))
+            syn_df = pd.DataFrame([t.to_dict() for t in syn_tasks])
+            train_df = pd.concat([live_df, syn_df], ignore_index=True)
+        else:
+            train_df = live_df
+        ml = MLEngine(train_df, model_dir="models")
+        ml.train()
+        pred = ml.predict_single(
+            priority=args.priority,
+            category=args.category,
+            assignee=args.assignee,
+            estimated_hours=args.estimated,
+        )
+        overrun = pred - args.estimated
+        sign = "+" if overrun >= 0 else ""
+        print(f"Predicted actual hours: {pred:.2f} h  ({sign}{overrun:.2f} h vs estimate)")
 
     elif cmd == "report":
         file_path = args.output or "project_report.md"
@@ -350,6 +464,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
     # seed
     subparsers.add_parser("seed", help="Seed sample dataset")
+
+    # predict
+    predict_parser = subparsers.add_parser("predict", help="ML: predict actual hours for a task")
+    predict_parser.add_argument("--priority", default="MEDIUM", help="Task priority (LOW/MEDIUM/HIGH/CRITICAL)")
+    predict_parser.add_argument("--category", default="General", help="Task category (e.g. Backend)")
+    predict_parser.add_argument("--assignee", default="Unassigned", help="Assignee name")
+    predict_parser.add_argument("--estimated", type=float, default=4.0, help="Estimated hours")
 
     return parser
 
