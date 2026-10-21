@@ -1,3 +1,4 @@
+
 """Automated Report Generator for the Kanban Engine.
 
 Generates structured Markdown reports, CSV/Excel summaries, and terminal

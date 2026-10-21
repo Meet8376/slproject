@@ -163,9 +163,17 @@ def show_interactive_menu(engine: KanbanEngine) -> None:
         elif choice == "5":
             print("\n--- Delete Task ---")
             task_id = input("Enter Task ID to delete: ").strip().upper()
+            task = engine.get_task(task_id)
+            if not task:
+                print(f"❌ Task '{task_id}' not found.")
+                input("\nPress Enter to continue...")
+                continue
+
+            print(f"  Task  : {task.title}")
+            actor = input("Enter your name: ").strip()
             confirm = input(f"Are you sure you want to delete {task_id}? (y/n): ").strip().lower()
             if confirm == "y":
-                ok, msg = engine.delete_task(task_id)
+                ok, msg = engine.delete_task(task_id, actor=actor)
                 print(f"{'✅' if ok else '❌'} {msg}")
             else:
                 print("Deletion cancelled.")

@@ -3,10 +3,11 @@ TASK-101,Design Pandas schema & file persistence layer,Meet,DONE,HIGH,Backend,6.
 TASK-102,Implement NumPy statistical metrics engine,Sujal,DONE,HIGH,Analytics,5.0,6.0,"math, numpy, statistics",2026-10-10 11:30,2026-10-12 14:00
 TASK-103,Create multi-column ASCII terminal visualizer,Member3,DONE,MEDIUM,CLI,4.0,3.5,"terminal, ui, visualizer",2026-10-11 09:00,2026-10-12 18:00
 TASK-104,Add state transition validation & constraint rules,Meet,REVIEW,CRITICAL,Core,4.5,5.0,"core, state-machine, validation",2026-10-12 10:00,
-TASK-105,Implement bulk DataFrame boolean filtering engine,Sujal,IN_PROGRESS,HIGH,Backend,5.0,4.0,"filtering, pandas, search",2026-10-13 09:30,
+TASK-105,ABCDE,Sujal,IN_PROGRESS,LOW,Backend,5.0,2.0,"filtering, pandas, search",2026-10-13 09:30,
 TASK-106,Build automated Markdown & CSV report generator,Member3,IN_PROGRESS,MEDIUM,Reporting,3.5,2.5,"export, markdown, reports",2026-10-13 11:00,
 TASK-107,Support Excel (.xlsx) storage format via openpyxl,Meet,IN_PROGRESS,MEDIUM,Storage,3.0,0.0,"excel, openpyxl, persistence",2026-10-14 08:30,
 TASK-108,Add outlier detection using 90th percentile threshold,Sujal,TODO,LOW,Analytics,2.5,0.0,"math, numpy, outliers",2026-10-14 09:00,
 TASK-109,Write comprehensive unit tests for state machine,Member3,TODO,HIGH,Testing,4.0,0.0,"pytest, quality, testing",2026-10-14 10:00,
 TASK-110,Resolve third-party library dependency conflict,Meet,BLOCKED,CRITICAL,DevOps,2.0,3.0,"blocking, bug, devops",2026-10-14 10:30,
 TASK-111,make a document,Madhura,IN_PROGRESS,CRITICAL,Frontend,4.0,0.0,"'script, ai'",2026-10-20 17:38,
+TASK-112,Add AI model,Madhura,TODO,LOW,General,3.0,0.0,"'ai, ui""",2026-10-21 09:27,

@@ -116,11 +116,37 @@ class KanbanEngine:
             return True, f"Task '{tid}' updated: {', '.join(updated_fields)}"
         return False, "No valid fields were provided for update."
 
-    def delete_task(self, task_id: str) -> Tuple[bool, str]:
-        """Remove a task from the board by task_id."""
+    def delete_task(self, task_id: str, actor: Optional[str] = None) -> Tuple[bool, str]:
+        """Remove a task from the board by task_id.
+
+        Parameters
+        ----------
+        task_id:
+            The ID of the task to delete.
+        actor:
+            The name of the person requesting the deletion. When provided,
+            the method checks that ``actor`` matches the task's ``assignee``
+            (case-insensitive). If they don't match, deletion is denied.
+            Pass ``None`` to skip the ownership check (admin / system use).
+
+        Returns
+        -------
+        Tuple[bool, str]
+            ``(True, success_message)`` or ``(False, error_message)``.
+        """
         tid = str(task_id).strip().upper()
         if self.df.empty or tid not in self.df.index:
             return False, f"Task '{tid}' not found."
+
+        # --- Ownership check ---
+        if actor is not None:
+            owner = str(self.df.loc[tid, "assignee"]).strip()
+            if owner.lower() != actor.strip().lower():
+                return (
+                    False,
+                    f"Permission denied: '{actor}' cannot delete task '{tid}' "
+                    f"because it is assigned to '{owner}'.",
+                )
 
         self.df = self.df.drop(index=tid)
         self.persist()
